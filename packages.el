@@ -49,8 +49,8 @@
 ;; ...Or *all* packages (NOT RECOMMENDED; will likely break things)
 ;(unpin! t)
 (package! beancount
-  :recipe (:host github :repo "beancount/beancount"
-           :files ("editors/emacs/beancount.el")))
+  :recipe (:host github :repo "beancount/beancount-mode"
+           :files ("beancount.el") :branch "main"))
 (package! cider)
 
 (package! org-download)
@@ -67,4 +67,11 @@
 
 (package! osx-dictionary)
 
-(package! rime)
+(unpin! org-roam company-org-roam)
+
+;; (package! jetbrains-darcula-theme
+  ;; :recipe (:host github :repo "ianpan870102/jetbrains-darcula-emacs-theme"))
+
+(package! org-superstar)
+
+(package! eglot)

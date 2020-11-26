@@ -19,17 +19,36 @@
 ;;
 ;; They all accept either a font-spec, font string ("Input Mono-12"), or xlfd
 ;; font string. You generally only need these two:
- (setq doom-font (font-spec :family "JetBrains Mono" :size 12 :weight 'semi-light)
-       doom-variable-pitch-font (font-spec :family "JetBrains Mono" :size 13))
+;; (setq doom-font (font-spec :family "JetBrains Mono" :size 12 :weight 'semi-light)
+;;       doom-variable-pitch-font (font-spec :family "JetBrains Mono" :size 13))
+ ;; (setq doom-font (font-spec :family "Overpass Mono" :size 12 :weight 'semi-light)
+ ;;     doom-variable-pitch-font (font-spec :family "Overpass Mono" :size 13))
+;; (setq doom-font (font-spec :family "DejaVu Sans Mono" :size 12 :weight 'semi-light)
+;;       doom-variable-pitch-font (font-spec :family "DejaVu Sans Mono" :size 13))
+(setq doom-font (font-spec :family "Fira Code" :size 14)
+      doom-big-font (font-spec :family "JetBrains Mono" :size 36)
+      doom-variable-pitch-font (font-spec :family "Overpass Mono" :size 14)
+      doom-serif-font (font-spec :family "IBM Plex Mono" :weight 'light))
+
 
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
-(setq doom-theme 'doom-one)
+;; (setq doom-theme 'jetbrains-darcula)
+(setq doom-theme 'doom-solarized-light)
+
+(set-terminal-coding-system 'utf-8)
+(setq default-buffer-file-coding-system 'utf-8)
+
+;; maximize emacs when launch
+(add-to-list 'initial-frame-alist '(fullscreen . maximized))
+
 
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/org/")
+(after! org
+  (load! "org-config.el"))
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
@@ -52,15 +71,21 @@
 ;;   :custom
 ;;   (org-crypt-key "randylien@gmail.com"))
 
+(add-hook 'org-mode-hook (lambda () (org-superstar-mode 1)))
 
-(use-package! org-journal
+
+(after! org-journal
   ;; :bind
-  ;; ("C-c n j" . org-journal-new-entry)
-  :custom
-  (org-journal-file-format "%Y-%m-%d.org")
-  (org-journal-dir "~/org/journal/")
+  ;; (map! "C-c n j" #'org-journal-new-entry)
+  ;; :custom
+  (setq org-journal-file-format "%Y-%m-%d.org"
+        org-journal-dir "~/org/roam/journal/"
+        org-journal-date-format "%A, %d %B %Y")
+  ;; (org-journal-file-format "%Y-%m-%d.org")
+  ;; (org-journal-dir "~/org/journal/")
   ;(org-journal-enable-encryption t)
-  (org-journal-date-format "%A, %d %B %Y"))
+  ;; (org-journal-date-format "%A, %d %B %Y")
+  )
 
 ;; Here are some additional functions/macros that could help you configure Doom:
 ;;
@@ -109,11 +134,18 @@
   ;;        ("s-y" . org-download-yank)))
   ;; )
 
+;; Auto update LAST_MODIFIED: <> time
+(require 'time-stamp)
+(add-hook 'write-file-functions 'time-stamp)
+(add-hook 'org-roam-mode-hook (lambda ()
+                                (set (make-local-variable 'time-stamp-pattern)
+                                     "-8/LAST_MODIFIED:[ \t]+\\\\?[\"<]+%:y-%02m-%02d %a %02H:%02M:%02S\\\\?[\">]")))
+(add-hook 'org-roam-mode-hook (lambda () (add-hook 'before-save-hook 'time-stamp nil 'local)))
 
-(use-package! org-roam
-  :hook
-  (after-init . org-roam-mode)
-  :config
+(after! org-roam
+  ;; :hook
+  ;; (after-init . org-roam-mode)
+  ;; :config
   (setq org-roam-directory "~/org/roam/"
         org-roam-buffer-width 0.3
         org-roam-index-file "index.org"
@@ -124,22 +156,19 @@
         '(("d" "default" plain (function org-roam-capture--get-point)
            "%?"
            :file-name "${slug}"
-           :head "#+TITLE: ${title}\n#+CREATED: %U\n#+LAST_MODIFIED: %U\n\n"
+           :head "#+TITLE: ${title}\n#+CREATED: %U\n#+LAST_MODIFIED: <>\n#+ROAM_ALIAS: \n#+ROAM_TAGS: \n\n"
            :unnarrowed t))
         org-roam-capture-ref-templates
         '(("r" "ref" plain (function org-roam-capture--get-point)
            "%?"
            :file-name "websites/${slug}"
-           :head "#+TITLE: ${title}\n#+ROAM_KEY: ${ref}\n"
+           :head "#+TITLE: ${title}\n#+ROAM_KEY: ${ref}\n#+CREATED: %U\n#+LAST_MODIFIED: <>\n#+ROAM_ALIAS: \n#+ROAM_TAGS: \n\n"
            :unnarrowed t)))
-  ;; :bind (:map org-roam-mode-map
-  ;;        (("C-c n l" . org-roam)
-  ;;         ("C-c n f" . org-roam-find-file)
-  ;;         ("C-c n h" . org-roam-jump-to-index)
-  ;;         ("C-c n b" . org-roam-switch-to-buffer))
-  ;;        :map org-mode-map
-  ;;        (("C-c n i" . org-roam-insert))
-  ;;        )
+  (map! :map org-roam-mode-map
+        :g "C-c r i" 'org-roam-insert
+        "C-c r f" 'org-roam-find-file
+        "C-c r b" 'org-roam-switch-to-buffer
+        "C-c r I" 'org-roam-jump-to-index)
   )
 
 ;; (use-package org-roam-server
@@ -227,35 +256,6 @@
         ("c" "org-protocol-capture" entry (file ,(concat randylien/org-agenda-directory "inbox.org"))
          "* TODO [[%:link][%:description]]\n\n %i" :immediate-finish t)))
 
-;; (setq randylien/org-agenda-todo-view
-;;       `(" " "Agenda"
-;;         ((agenda ""
-;;                  ((org-agenda-span 'day)
-;;                   (org-deadline-warning-days 365)))
-;;          (todo "TODO"
-;;                ((org-agenda-overriding-header "To Refile")
-;;                 (org-agenda-files '(,(concat randylien/org-agenda-directory "inbox.org")))))
-;;          (todo "TODO"
-;;                ((org-agenda-overriding-header "Emails")
-;;                 (org-agenda-files '(,(concat randylien/org-agenda-directory "emails.org")))))
-;;          (todo "NEXT"
-;;                ((org-agenda-overriding-header "In Progress")
-;;                 (org-agenda-files '(,(concat randylien/org-agenda-directory "someday.org")
-;;                                     ,(concat randylien/org-agenda-directory "projects.org")
-;;                                     ,(concat randylien/org-agenda-directory "next.org")))
-;;                 ))
-;;          (todo "TODO"
-;;                ((org-agenda-overriding-header "Projects")
-;;                 (org-agenda-files '(,(concat randylien/org-agenda-directory "projects.org")))
-;;                 ))
-;;          (todo "TODO"
-;;                ((org-agenda-overriding-header "One-off Tasks")
-;;                 (org-agenda-files '(,(concat randylien/org-agenda-directory "next.org")))
-;;                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'deadline 'scheduled))))
-;;          nil)))
-
-;(add-to-list 'org-agenda-custom-commands `randylien/org-agenda-todo-view)
-
 ;; nov.el
 (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
 
@@ -316,12 +316,12 @@
    (quote
     ((cider-ns-refresh-after-fn . "clj-and-cljs-app.main/start")
      (cider-ns-refresh-before-fn . "clj-and-cljs-app.main/stop")))))
-(custom-set-faces
+;; (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:background "#21242b")))))
+ ;; '(default ((t (:background "#21242b")))))
 
 (map! :leader
       (:prefix-map ("d" . "dictionary")
@@ -335,35 +335,18 @@
         :desc "forward" "f" #'sp-forward-slurp-sexp
         :desc "backward" "b" #'sp-backward-slurp-sexp)))
 
+;; (use-package! rime
+;;   :custom
+;;   (default-input-method "rime")
+;;   (rime-user-data-dir "~/.emacs.d/rime")
+;;   (rime-librime-root "~/.emacs.d/librime/dist")
+;;   )
 
-;;smartparens
-
-;;parinfer
-;; (use-package! parinfer
-;;   :ensure t
-;;   :bind
-;;   (("C-," . parinfer-toggle-mode))
-;;   :init
-;;   (progn
-;;     (setq parinfer-extensions
-;;           '(defaults       ; should be included.
-;;             pretty-parens  ; different paren styles for different modes.
-;;             evil           ; If you use Evil.
-;;             lispy          ; If you use Lispy. With this extension, you should install Lispy and do not enable lispy-mode directly.
-;;             paredit        ; Introduce some paredit commands.
-;;             smart-tab      ; C-b & C-f jump positions and smart shift with tab & S-tab.
-;;
-;;
-;;             smart-yank))   ; Yank behavior depend on mode.
-;;     (add-hook 'clojure-mode-hook #'parinfer-mode)
-;;     (add-hook 'emacs-lisp-mode-hook #'parinfer-mode)
-;;     (add-hook 'common-lisp-mode-hook #'parinfer-mode)
-;;     (add-hook 'scheme-mode-hook #'parinfer-mode)
-;;     (add-hook 'lisp-mode-hook #'parinfer-mode)))
-
-(use-package! rime
+(use-package! deft
+  :after org
+  :bind ("C-c n d" . deft)
   :custom
-  (default-input-method "rime")
-  (rime-user-data-dir "~/.emacs.d/rime")
-  (rime-librime-root "~/.emacs.d/librime/dist")
-  )
+  (deft-recursive t)
+  (deft-use-filter-string-for-filename t)
+  (deft-default-extension "org.gpg")
+  (deft-directory "~/org/roam/"))
